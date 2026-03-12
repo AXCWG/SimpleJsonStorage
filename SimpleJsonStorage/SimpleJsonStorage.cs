@@ -341,11 +341,3 @@ public interface IProgramStorage<T>
     T? Get();
     void Set(T obj);
 }
-
-internal static class Null
-{
-    public static bool CheckIfNull<T>(T value)
-    {
-        return !typeof(T).IsClass || value != null;
-    }
-}

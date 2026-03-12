@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
         <LangVersion>preview</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>SimpleJsonStorageOrm</PackageId>
-        <Version>1.2.1</Version>
+        <Version>1.2.2</Version>
         <Authors>AXCWG</Authors>
         <Description>Simple JSON Storage with ORM to a certain degree. </Description>
         <PackageTags>console;json;storage;database;crud;orm</PackageTags>
@@ -14,7 +14,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Infos</PackageReleaseNotes>
+        <PackageReleaseNotes>Removed redundant code</PackageReleaseNotes>
     </PropertyGroup>
 
    <ItemGroup>

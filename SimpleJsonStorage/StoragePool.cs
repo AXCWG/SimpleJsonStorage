@@ -27,13 +27,3 @@ public abstract class StoragePool
         }
     }
 }
-
-public sealed class SampleStoragePool : StoragePool
-{
-    public ProgramStorageSet<string> Strings { get; set; } = null!;
-
-    public SampleStoragePool(string identifier, JsonSerializerOptions? options = null)
-    {
-        OnConfiguring(identifier, options);
-    }
-}
