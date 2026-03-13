@@ -25,5 +25,11 @@ public abstract class StoragePool
         {
             propertyInfo.SetValue(this, Activator.CreateInstance(typeof(ProgramStorage<>).MakeGenericType(propertyInfo.PropertyType.GenericTypeArguments[0]), args: [identifier, propertyInfo.Name, null, options]));
         }
+
+        foreach (var propertyInfo in GetType().GetProperties().Where(i=>i.PropertyType == typeof(DelayedProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
+        {
+            propertyInfo.SetValue(this, Activator.CreateInstance(typeof(DelayedProgramStorageSet<>).MakeGenericType(propertyInfo.PropertyType.GenericTypeArguments[0]), args: [identifier, propertyInfo.Name, null, options]));
+            
+        }
     }
 }

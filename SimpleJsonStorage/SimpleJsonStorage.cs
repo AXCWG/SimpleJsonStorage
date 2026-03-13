@@ -250,16 +250,16 @@ public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection
     public string StorageName { get; private set; }
     public string ProgramStoragePath { get; private set; }
     public JsonSerializerOptions JsonSerializerOptions { get; private set; }
-    public IEnumerable<T> Get()
+    public virtual IEnumerable<T> Get()
     {
         return JsonSerializer.Deserialize<List<T>>(File.ReadAllText(ProgramStoragePath), JsonSerializerOptions) ?? throw new NullReferenceException("The object is null. ");
     }
 
-    public void Set(IEnumerable<T> obj)
+    public virtual void Set(IEnumerable<T> obj)
     {
         File.WriteAllText(ProgramStoragePath, JsonSerializer.Serialize(obj, JsonSerializerOptions));
     }
-    public IEnumerator<T> GetEnumerator()
+    public virtual IEnumerator<T> GetEnumerator()
     {
         foreach (var inst in Get())
         {
@@ -331,6 +331,47 @@ public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection
     }
 }
 
+[RequiresUnreferencedCode(
+    "JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext, or make sure all of the required types are preserved.")]
+#if NET7_0_OR_GREATER
+[RequiresDynamicCode("JSON serialization and deserialization might require types that cannot be statically analyzed and might need runtime code generation. Use System.Text.Json source generation for native AOT applications.")]
+#endif
+public class DelayedProgramStorageSet<T> : ProgramStorageSet<T>
+{
+    private IEnumerable<T> UnderlyingStructure { get; set; }
+    private Timer Timer { get; set; }
+    public DelayedProgramStorageSet(string identifier, string name, string? path = null, JsonSerializerOptions? options = null, TimeSpan? timespan = null) : base(identifier, name, path, options)
+    {
+        if (timespan is null)
+        {
+            timespan = TimeSpan.FromSeconds(5); 
+        }
+        UnderlyingStructure = JsonSerializer.Deserialize<IEnumerable<T>>(File.ReadAllText(ProgramStoragePath)) ??
+                                  throw new NullReferenceException("The object is null. ");
+        Timer = new(_ =>
+        {
+            base.Set(UnderlyingStructure);
+        }, null, dueTime: timespan.Value, );
+    }
+
+    public override IEnumerable<T> Get()
+    {
+        return UnderlyingStructure; 
+    }
+    
+    public override IEnumerator<T> GetEnumerator()
+    {
+        foreach (var x1 in Get())
+        {
+            yield return x1; 
+        }
+    }
+
+    public override void Set(IEnumerable<T> obj)
+    {
+        UnderlyingStructure = obj; 
+    }
+}
 public interface IProgramStorage<T>
 {
     IProgramStorage<T> Configure(string identifier, string name, string? path = null, JsonSerializerOptions? options = null); 
