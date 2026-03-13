@@ -259,6 +259,12 @@ public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection
     {
         File.WriteAllText(ProgramStoragePath, JsonSerializer.Serialize(obj, JsonSerializerOptions));
     }
+
+    public virtual async Task SetAsync(IEnumerable<T> obj)
+    {
+        await using var s = File.Open(ProgramStoragePath, FileMode.Create);
+        await JsonSerializer.SerializeAsync(s, obj, JsonSerializerOptions);
+    }
     public virtual IEnumerator<T> GetEnumerator()
     {
         foreach (var inst in Get())
@@ -304,23 +310,20 @@ public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection
 
     public bool Remove(T item)
     {
-        var l = Get();
-        var d = new List<T>(); 
-        foreach (var x1 in l)
-        {
-            if (x1?.Equals(item) ?? x1 is null && item is null)
-            {
-                break; 
-            }
-            d.Add(x1);
-        }
-
-        if (d.Count == Count)
-        {
-            return false; 
-        }
-        Set(d);
+        var l = Get().ToList();
+        l.Remove(item); 
+        Set(l);
+        if (Get().Count() == l.Count) return false; 
         return true; 
+    }
+
+    public bool RemoveAll(Predicate<T> match)
+    {
+        var l = Get().ToList();
+        l.RemoveAll(match.Invoke);
+        Set(l);
+        if (Get().Count() == l.Count) return false; 
+        return true;
     }
 
     public int Count => Get().Count();
@@ -336,22 +339,24 @@ public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection
 #if NET7_0_OR_GREATER
 [RequiresDynamicCode("JSON serialization and deserialization might require types that cannot be statically analyzed and might need runtime code generation. Use System.Text.Json source generation for native AOT applications.")]
 #endif
-public class DelayedProgramStorageSet<T> : ProgramStorageSet<T>
+public class DelayedProgramStorageSet<T> : ProgramStorageSet<T>, IDelayedProgramStorageSet, IDisposable, IAsyncDisposable
 {
+    private FileStream _stream; 
     private IEnumerable<T> UnderlyingStructure { get; set; }
-    private Timer Timer { get; set; }
+    private Timer? Timer { get; set; }
     public DelayedProgramStorageSet(string identifier, string name, string? path = null, JsonSerializerOptions? options = null, TimeSpan? timespan = null) : base(identifier, name, path, options)
     {
-        if (timespan is null)
-        {
-            timespan = TimeSpan.FromSeconds(5); 
-        }
-        UnderlyingStructure = JsonSerializer.Deserialize<IEnumerable<T>>(File.ReadAllText(ProgramStoragePath)) ??
+        _stream = File.Open(ProgramStoragePath, FileMode.OpenOrCreate);
+        UnderlyingStructure = JsonSerializer.Deserialize<IEnumerable<T>>(_stream) ??
                                   throw new NullReferenceException("The object is null. ");
-        Timer = new(_ =>
+        if (timespan is not null)
         {
-            base.Set(UnderlyingStructure);
-        }, null, dueTime: timespan.Value, );
+            Timer = new(async _=>
+            { 
+                await SaveChangesAsync();
+            },null, dueTime:TimeSpan.Zero, timespan.Value);
+        }
+        
     }
 
     public override IEnumerable<T> Get()
@@ -371,8 +376,41 @@ public class DelayedProgramStorageSet<T> : ProgramStorageSet<T>
     {
         UnderlyingStructure = obj; 
     }
+
+    public async Task SaveChangesAsync()
+    {
+        Stream.Synchronized(_stream).SetLength(0);
+        await JsonSerializer.SerializeAsync(Stream.Synchronized(_stream), UnderlyingStructure, JsonSerializerOptions);
+        await Stream.Synchronized(_stream).FlushAsync();
+    }
+    public void SaveChanges()
+    {
+        _stream.SetLength(0);
+        JsonSerializer.Serialize(_stream, UnderlyingStructure, JsonSerializerOptions);
+        Stream.Synchronized(_stream).FlushAsync(); 
+    }
+
+    public void Dispose()
+    {
+        Timer?.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Timer != null) await Timer.DisposeAsync();
+
+        await Stream.Synchronized(_stream).DisposeAsync();
+            
+        
+
+    }
 }
-public interface IProgramStorage<T>
+
+public interface IDelayedProgramStorageSet
+{
+    void SaveChanges();
+}
+public interface IProgramStorage<T> 
 {
     IProgramStorage<T> Configure(string identifier, string name, string? path = null, JsonSerializerOptions? options = null); 
     bool Configured { get; }

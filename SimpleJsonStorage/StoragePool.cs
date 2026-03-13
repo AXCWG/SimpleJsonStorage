@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 
@@ -11,25 +12,74 @@ namespace SimpleJsonStorage;
 #endif
 public abstract class StoragePool
 {
-    public virtual void OnConfiguring(string identifier, JsonSerializerOptions? options = null)
+    public virtual void OnConfiguring(string identifier, Func<ConfigurationBuilder, ConfigurationBuilder>? builder = null, JsonSerializerOptions? options = null)
     {
-        foreach (var propertyInfo in GetType().GetProperties().Where(i => i.PropertyType == typeof(ProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
+        var b = builder?.Invoke(new()) ?? new();
+        foreach (var propertyInfo in GetType().GetProperties().Where(i => i.PropertyType == typeof(ProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])||
+                                                                          i.PropertyType == typeof(ProgramStorage<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])||
+                                                                          i.PropertyType == typeof(DelayedProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
         {
-            var t = propertyInfo.PropertyType.GenericTypeArguments[0];
-            propertyInfo.SetValue(this, Activator.CreateInstance(typeof(ProgramStorageSet<>).MakeGenericType(t), args:
-                [identifier, propertyInfo.Name, null, options]));
+            propertyInfo.SetValue(this, b.Apply(propertyInfo,identifier, propertyInfo.Name, null, options ));
         }
-
         
-        foreach (var propertyInfo in GetType().GetProperties().Where(i=>i.PropertyType == typeof(ProgramStorage<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
+    }
+
+    
+    public void SaveChanges()
+    {
+        foreach (var propertyInfo in GetType().GetProperties().Where(i =>
+                     i.PropertyType ==
+                     typeof(DelayedProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
         {
-            propertyInfo.SetValue(this, Activator.CreateInstance(typeof(ProgramStorage<>).MakeGenericType(propertyInfo.PropertyType.GenericTypeArguments[0]), args: [identifier, propertyInfo.Name, null, options]));
+
+            ((IDelayedProgramStorageSet)propertyInfo.GetValue(this)!).SaveChanges(); 
+        }
+    }
+}
+public class ConfigurationBuilder
+{
+    private Dictionary<string, TimeSpan?> AutoSaveChanges { get; set; } = []; 
+    public ConfigurationBuilder UseAutoSaveChanges<TStoragePool, TProperty>(Expression<Func<TStoragePool, TProperty>> expression,TimeSpan timeSpan) where TProperty : IDelayedProgramStorageSet
+    {
+        if (expression.Body is MemberExpression memberExpression)
+        {
+            if (memberExpression.Member is PropertyInfo propInfo)
+            {
+                 AutoSaveChanges.Add(propInfo.Name ?? throw new NullReferenceException(), timeSpan);
+            }
+        }
+        return this; 
+    }
+
+    internal object? Apply(PropertyInfo p, string identifier, string name, string? path, JsonSerializerOptions? options)
+    {
+        if (p.PropertyType ==
+            typeof(DelayedProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]))
+        {
+            foreach (var autoSaveChange in AutoSaveChanges)
+            {
+                if (p.Name == autoSaveChange.Key)
+                {
+                    return Activator.CreateInstance(
+                        typeof(DelayedProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options, autoSaveChange.Value);
+                }
+                
+            }
+            return Activator.CreateInstance(
+                typeof(DelayedProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]),
+                identifier, name, path, options);
+        }
+        if (p.PropertyType == typeof(ProgramStorage<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]))
+        {
+            return Activator.CreateInstance(
+                typeof(ProgramStorage<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options);
+        }
+        if(p.PropertyType == typeof(ProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]))
+        {
+            return Activator.CreateInstance(
+                typeof(ProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options);
         }
 
-        foreach (var propertyInfo in GetType().GetProperties().Where(i=>i.PropertyType == typeof(DelayedProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
-        {
-            propertyInfo.SetValue(this, Activator.CreateInstance(typeof(DelayedProgramStorageSet<>).MakeGenericType(propertyInfo.PropertyType.GenericTypeArguments[0]), args: [identifier, propertyInfo.Name, null, options]));
-            
-        }
+        throw new InvalidOperationException("Property Info does not match to any suitable type. "); 
     }
 }

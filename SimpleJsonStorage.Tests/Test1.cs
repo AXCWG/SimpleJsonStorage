@@ -9,12 +9,79 @@ public sealed class Test1
         var s = new AppStorage();
         for (int i = 0; i < 10; i++)
         {
-            s.TestClassEntries.Add(new()
+            Task.Delay(400).GetAwaiter().GetResult();
+            s.NonDelayedTestClassEntries.Add(new()
             {
                 Uuid = Guid.NewGuid().ToString(),
                 Yes = Random.Shared.NextSingle() >= 0.5,
             });
         }
+        
+        
+    }
+
+    [TestMethod]
+    public async Task DelayedInteractfulStoragePool()
+    {
+        var s = new AppStorage();
+        for (int i = 0; i < 10; i++)
+        {
+            s.TestClassEntries.Add(new()
+            {
+                Uuid = Guid.NewGuid().ToString(),
+                Yes = Random.Shared.NextSingle() >= 0.5,
+            });
+            await Task.Delay(500);
+            
+        }
+
+    }
+
+    [TestMethod]
+    public void DelayedStorageRemove()
+    {
+        var s = new DelayedProgramStorageSet<AppStorage.TestClassR>("com.axcwg.test", "TestClassEntries", options: new()
+        {
+            WriteIndented = true
+        });
+        s.Remove(new()
+        {
+            Uuid = "15abac1a-34b7-4d24-9b8b-c742a089f800",
+            Yes = true
+        });
+        s.SaveChanges();
+        
+
+    }
+
+    [TestMethod]
+    public void StorageRemove()
+    {
+        var s = new ProgramStorageSet<AppStorage.TestClassR>("com.axcwg.test", "NonDelayedTestClassEntries",
+            options: new()
+            {
+                WriteIndented = true
+            });
+        s.RemoveAll(i => i.Uuid == "542f0cdc-22f8-4546-bd2e-f409e56d0b1c");
+        
+
+    }
+
+    [TestMethod]
+    public void Equal()
+    {
+        var a = new AppStorage.TestClass
+        {
+            Uuid = "2",
+            Yes = false
+        };
+        var b = new AppStorage.TestClass
+        {
+            Uuid = "2",
+            Yes = false
+        };
+        Console.WriteLine($"{a == b}");
+        Console.WriteLine($"{a.Equals(b) }");
     }
 }
 
@@ -27,13 +94,22 @@ public sealed class AppStorage : StoragePool
         public required bool Yes { get; set; }
     }
 
+    public record TestClassR
+    {
+        public required string Uuid { get; set; }
+        public required bool Yes { get; set; }
+    }
+
     public DelayedProgramStorageSet<TestClass> TestClassEntries { get; set; } = null!;
+    public ProgramStorageSet<TestClass> NonDelayedTestClassEntries { get; set; } = null!; 
 
     public AppStorage()
     {
-        OnConfiguring("com.axcwg.test", new()
+        OnConfiguring(identifier: "com.axcwg.test", options:new()
         {
             WriteIndented = true
-        }); 
+        }, builder: builder =>
+            builder.UseAutoSaveChanges<AppStorage, DelayedProgramStorageSet<TestClass>>(i => TestClassEntries, TimeSpan.FromSeconds(1))
+        ); 
     }
 }
