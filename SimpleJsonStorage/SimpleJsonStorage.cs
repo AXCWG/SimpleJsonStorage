@@ -13,7 +13,7 @@ namespace SimpleJsonStorage;
 #if NET7_0_OR_GREATER
 [RequiresDynamicCode("JSON serialization and deserialization might require types that cannot be statically analyzed and might need runtime code generation. Use System.Text.Json source generation for native AOT applications.")]
 #endif
-public class ProgramStorage<T> : IProgramStorage<T> where T: new()
+public class ProgramStorage<T> : IDisposable, IProgramStorage<T>, IAsyncDisposable where T: new()
 {
     public FileStream FileStream { get; }
     public bool CheckOnSave { get; init; }
@@ -244,13 +244,23 @@ public class ProgramStorage<T> : IProgramStorage<T> where T: new()
         }
         return (T2)(dynamic)i; 
     }
+
+    public void Dispose()
+    {
+        FileStream.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await FileStream.DisposeAsync();
+    }
 }
 
 [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext, or make sure all of the required types are preserved.")]
 #if NET7_0_OR_GREATER
 [RequiresDynamicCode("JSON serialization and deserialization might require types that cannot be statically analyzed and might need runtime code generation. Use System.Text.Json source generation for native AOT applications.")]
 #endif
-public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection<T>, IProgramStorageSet
+public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection<T>, IProgramStorageSet, IDisposable, IAsyncDisposable
 {
     public FileStream FileStream { get; set; }
     public ProgramStorageSet(string identifier, string name, string? path = null, JsonSerializerOptions? options = null, bool checkOnSave = false)
@@ -452,6 +462,16 @@ public class ProgramStorageSet<T> : IProgramStorage<IEnumerable<T>>, ICollection
     {
         get => false;
     }
+
+    public virtual void Dispose()
+    {
+        Stream.Synchronized(FileStream).Dispose();
+    }
+
+    public virtual async ValueTask DisposeAsync()
+    {
+        await Stream.Synchronized(FileStream).DisposeAsync();
+    }
 }
 
 [RequiresUnreferencedCode(
@@ -540,15 +560,16 @@ public class DelayedProgramStorageSet<T> : ProgramStorageSet<T>, IDelayedProgram
         Stream.Synchronized(FileStream).Flush(); 
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
         Timer?.Dispose();
     }
 
-    public async ValueTask DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
+        await base.DisposeAsync();
         if (Timer != null) await Timer.DisposeAsync();
-        await Stream.Synchronized(FileStream).DisposeAsync();
     }
 }
 

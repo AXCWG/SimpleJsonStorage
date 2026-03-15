@@ -10,7 +10,7 @@ namespace SimpleJsonStorage;
 #if NET7_0_OR_GREATER
 [RequiresDynamicCode("JSON serialization and deserialization might require types that cannot be statically analyzed and might need runtime code generation. Use System.Text.Json source generation for native AOT applications.")]
 #endif
-public abstract class StoragePool
+public abstract class StoragePool : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Configures the storage pool with the option provided. Return itself to specify no config needed. (<c>o=>o</c>)
@@ -40,6 +40,37 @@ public abstract class StoragePool
 
             ((IDelayedProgramStorageSet)propertyInfo.GetValue(this)!).SaveChanges(); 
         }
+    }
+
+    public void Dispose()
+    {
+        foreach (var propertyInfo in GetType().GetProperties().Where(i =>
+                     i.PropertyType ==
+                     typeof(ProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0]) ||
+                     i.PropertyType ==
+                     typeof(ProgramStorage<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0]) ||
+                     i.PropertyType ==
+                     typeof(DelayedProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
+        {
+            (propertyInfo.GetValue(this) as IDisposable)?.Dispose();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var propertyInfo in GetType().GetProperties().Where(i =>
+                     i.PropertyType ==
+                     typeof(ProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0]) ||
+                     i.PropertyType ==
+                     typeof(ProgramStorage<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0]) ||
+                     i.PropertyType ==
+                     typeof(DelayedProgramStorageSet<>).MakeGenericType(i.PropertyType.GenericTypeArguments[0])))
+        {
+            if((propertyInfo.GetValue(this) as IAsyncDisposable) is {  } o )
+                await o.DisposeAsync();
+            
+        }
+        
     }
 }
 public class ConfigurationBuilder
