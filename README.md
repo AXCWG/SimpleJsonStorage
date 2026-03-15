@@ -35,10 +35,24 @@ storage.Add(new()
 // Now storage will look something like: [{Name: "Andrew"}, {Name: "Alexander"}]. 
 // Please check Intellisense for more overloads. 
 ```
-
+## Details
+### ProgramStorages
+#### ProgramStorage\<T\>
+Resembles a single object. Type is controlled by generic T. IO is instantly saved. Configurable through `OnConfiguring()` delegate.
+#### ProgramStorageSet\<T\>
+Resembles a set of single object, like DbSet\<T\> in EF Core. Type is controlled by generic T. IO is instantly saved. Configurable through `OnConfiguring()` delegate.
+#### DelayedProgramStorageSet\<T\>
+Resembles a set of single object with advanced features like `SaveChanges()` and auto-saving by time period. Configurable through `OnConfiguring()` delegate.
+### OnConfiguring()
+```csharp
+OnConfiguring([identifier], (ConfigurationBuilder o) => o..., [JSONSerializerOptions]);
+```
+Currently `o` has 2 extension methods for configuring: `UseAutoSaveChanges()` and `UseCheckOnSaveChanges()`. CheckOnSaveChanges works on all 3 types of storage but
+UseAutoSaveChanges only applies to `DelayedProgramStorageSet`.
 ## Storage Pool
 Storage pool is something resembles DbContext in EF Core by deriving custom "contexts" from class `StoragePool`. 
 
+Any number and combinations of above storage types would work. 
 ```csharp
 public sealed class SampleStoragePool : StoragePool
 {
