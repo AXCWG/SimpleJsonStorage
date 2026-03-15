@@ -12,6 +12,12 @@ namespace SimpleJsonStorage;
 #endif
 public abstract class StoragePool
 {
+    /// <summary>
+    /// Configures the storage pool with the option provided. Return itself to specify no config needed. (<c>o=>o</c>)
+    /// </summary>
+    /// <param name="identifier">Program identifier.</param>
+    /// <param name="builder">Building delegate. </param>
+    /// <param name="options">JsonSerializerOptions used for serializing and deserializing JSON data. </param>
     public virtual void OnConfiguring(string identifier, Func<ConfigurationBuilder, ConfigurationBuilder>? builder = null, JsonSerializerOptions? options = null)
     {
         var b = builder?.Invoke(new()) ?? new();
@@ -38,7 +44,8 @@ public abstract class StoragePool
 }
 public class ConfigurationBuilder
 {
-    private Dictionary<string, TimeSpan?> AutoSaveChanges { get; set; } = []; 
+    private Dictionary<string, TimeSpan?> AutoSaveChanges { get; set; } = [];
+    private List<string> CheckOnSaveChanges { get; set; } = []; 
     public ConfigurationBuilder UseAutoSaveChanges<TStoragePool, TProperty>(Expression<Func<TStoragePool, TProperty>> expression,TimeSpan timeSpan) where TProperty : IDelayedProgramStorageSet
     {
         if (expression.Body is MemberExpression memberExpression)
@@ -51,33 +58,47 @@ public class ConfigurationBuilder
         return this; 
     }
 
+    public ConfigurationBuilder UseCheckOnSaveChanges<TStoragePool, TProperty>(
+        Expression<Func<TStoragePool, TProperty>> expression) where TProperty: IProgramStorage
+    {
+        if (expression.Body is MemberExpression memberExpression)
+        {
+            if (memberExpression.Member is PropertyInfo propInfo)
+            {
+                CheckOnSaveChanges.Add(propInfo.Name);
+            }
+        }
+
+        return this; 
+    }
+    
+
     internal object? Apply(PropertyInfo p, string identifier, string name, string? path, JsonSerializerOptions? options)
     {
         if (p.PropertyType ==
             typeof(DelayedProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]))
         {
-            foreach (var autoSaveChange in AutoSaveChanges)
+            var a = AutoSaveChanges.FirstOrDefault(i => i.Key == p.Name);
+            var c = CheckOnSaveChanges.Any(i => i == p.Name);
+            if (a.Key is not null)
             {
-                if (p.Name == autoSaveChange.Key)
-                {
-                    return Activator.CreateInstance(
-                        typeof(DelayedProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options, autoSaveChange.Value);
-                }
-                
+                return Activator.CreateInstance(
+                    typeof(DelayedProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]),
+                    identifier, name, path, options, a.Value,c);
             }
             return Activator.CreateInstance(
                 typeof(DelayedProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]),
-                identifier, name, path, options);
+                identifier, name, path, options,null,c);
         }
         if (p.PropertyType == typeof(ProgramStorage<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]))
         {
             return Activator.CreateInstance(
-                typeof(ProgramStorage<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options);
+                typeof(ProgramStorage<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options, CheckOnSaveChanges.Any(i=>i == p.Name));
         }
         if(p.PropertyType == typeof(ProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]))
         {
             return Activator.CreateInstance(
-                typeof(ProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options);
+                typeof(ProgramStorageSet<>).MakeGenericType(p.PropertyType.GenericTypeArguments[0]), identifier, name, path, options, CheckOnSaveChanges.Any(i=>i == p.Name));
         }
 
         throw new InvalidOperationException("Property Info does not match to any suitable type. "); 

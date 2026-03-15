@@ -2,14 +2,13 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AFile_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003Fbeef1329912d4d25a082fc3302380fbcc2ca0_003F4e_003Fb6b9379a_003FFile_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AJsonSerializerOptions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F062d237fadc54236a781c07f2d7d1ea21cc908_003Feb_003F48bb9a3c_003FJsonSerializerOptions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AMethodBaseInvoker_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F5abfc2f9674a4781aabbad089c04d62e1046310_003F3e_003F9a8a6d92_003FMethodBaseInvoker_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ARuntimeType_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F5abfc2f9674a4781aabbad089c04d62e1046310_003F14_003F0aaae4d5_003FRuntimeType_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ASafeFileHandle_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F51505665371d472f8bdbc333fa4d888cf49938_003F9a_003F1823ab08_003FSafeFileHandle_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=16253cb7_002D9438_002D4158_002D8f62_002D33031a014a43/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="DelayedStoragePool" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.DelayedStoragePool&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.DelayedStorage&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.StorageRemove&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.Equal&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.DelayedStorageRemove&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.DelayedInteractfulStoragePool&lt;/TestId&gt;&#xD;
-  &lt;/TestAncestor&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=16253cb7_002D9438_002D4158_002D8f62_002D33031a014a43/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="DelayedStoragePool" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.DelayedStoragePool&lt;/TestId&gt;
+    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.VerySimpleTest&lt;/TestId&gt;
+    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.DelayedInteractfulStoragePool&lt;/TestId&gt;
+    &lt;TestId&gt;MSTest::4A35630E-DEE1-B3B3-4D02-D5B1C22EC999::net10.0::SimpleJsonStorage.Tests.Test1.Combined&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

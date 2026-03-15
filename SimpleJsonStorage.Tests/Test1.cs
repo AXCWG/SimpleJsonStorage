@@ -1,4 +1,6 @@
-﻿namespace SimpleJsonStorage.Tests;
+﻿using System.Diagnostics;
+
+namespace SimpleJsonStorage.Tests;
 
 [TestClass]
 public sealed class Test1
@@ -21,7 +23,7 @@ public sealed class Test1
     }
 
     [TestMethod]
-    public async Task DelayedInteractfulStoragePool()
+    public void DelayedInteractfulStoragePool()
     {
         var s = new AppStorage();
         for (int i = 0; i < 10; i++)
@@ -31,9 +33,9 @@ public sealed class Test1
                 Uuid = Guid.NewGuid().ToString(),
                 Yes = Random.Shared.NextSingle() >= 0.5,
             });
-            await Task.Delay(500);
-            
+            Console.ReadLine();
         }
+        s.SaveChanges();
 
     }
 
@@ -83,6 +85,25 @@ public sealed class Test1
         Console.WriteLine($"{a == b}");
         Console.WriteLine($"{a.Equals(b) }");
     }
+
+    [TestMethod]
+    public void VerySimpleTest()
+    {
+        var timer = new Timer((_) =>
+        {
+            Debug.WriteLine("Hello. ");
+        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        Console.ReadLine(); 
+
+    }
+
+    [TestMethod]
+    public void Combined()
+    {
+        var s = new AppStorage();
+
+        Console.ReadLine();
+    }
 }
 
 
@@ -100,8 +121,15 @@ public sealed class AppStorage : StoragePool
         public required bool Yes { get; set; }
     }
 
+    public class TestSetting
+    {
+        public bool IsAdmin { get; set; }
+        public bool IsOp { get; set; }
+    }
+
     public DelayedProgramStorageSet<TestClass> TestClassEntries { get; set; } = null!;
-    public ProgramStorageSet<TestClass> NonDelayedTestClassEntries { get; set; } = null!; 
+    public ProgramStorageSet<TestClass> NonDelayedTestClassEntries { get; set; } = null!;
+    public ProgramStorage<TestSetting> TestSettings { get; set; } = null!;
 
     public AppStorage()
     {
@@ -109,7 +137,10 @@ public sealed class AppStorage : StoragePool
         {
             WriteIndented = true
         }, builder: builder =>
-            builder.UseAutoSaveChanges<AppStorage, DelayedProgramStorageSet<TestClass>>(i => TestClassEntries, TimeSpan.FromSeconds(1))
+            builder.UseAutoSaveChanges<AppStorage, DelayedProgramStorageSet<TestClass>>(i => TestClassEntries, TimeSpan.FromSeconds(1) )
+                .UseCheckOnSaveChanges<AppStorage, ProgramStorageSet<TestClass>>(o=>o.NonDelayedTestClassEntries)
+                .UseCheckOnSaveChanges<AppStorage, DelayedProgramStorageSet<TestClass>>(i=>i.TestClassEntries)
+                .UseCheckOnSaveChanges<AppStorage, ProgramStorage<TestSetting>>(o=>o.TestSettings)
         ); 
     }
 }
